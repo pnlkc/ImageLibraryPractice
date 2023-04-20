@@ -61,3 +61,69 @@ image.value?.let { bitmap ->
 }
 ```
 <br>
+
+### 230420
+- Glide 사용법 정리
+
+1. xml 형식의 view에 이미지 추가
+``` kotlin
+Glide
+    .with(Context)
+    .load(이미지 URI)
+    .into(이미지를 추가할 View);
+```
+<br>
+
+2. compose에 이미지 추가1 : 비트맵 객체 생성 후 이미지 컴포저블에 전달
+``` kotlin
+// 1. MutableState 비트맵 객체 생성
+val image = remember { mutableStateOf<Bitmap?>(null) }
+
+// 2. 컴포저블에서 context 가져오기
+val context = LocalContext.current
+
+// 3. 코루틴 Dispatchers.IO에서 Glide를 통해 이미지를 Bitmap으로 가져오기
+LaunchedEffect(imageUri) {
+    withContext(Dispatchers.IO) {
+        Glide
+            .with(context)
+            .asBitmap()
+            .load(imageUri)
+            .into(object : CustomTarget<Bitmap>() {
+                override fun onResourceReady(
+                    resource: Bitmap,
+                    transition: Transition<in Bitmap>?,
+                ) {
+                    image.value = resource
+                }
+
+                override fun onLoadCleared(placeholder: Drawable?) {}
+            })
+    }
+}
+
+// 4. 이미지 컴포저블에 비트맵 이미지 전달하기 
+image.value?.let { bitmap ->
+    Image(
+        bitmap = bitmap.asImageBitmap(),
+        contentDescription = null,
+        modifier = modifier
+    )
+}
+```
+<br>
+
+3. compose에 이미지 추가2 : GlideImage 컴포저블 사용
+``` kotlin
+// 1. 이미지 URI가 null인지 체크
+if (imageUri != null) {
+
+    // 2. GlideImage 컴포저블의 model 파라미터에 imageUri 
+    GlideImage(
+        model = imageUri,
+        contentDescription = null,
+        modifier = modifier
+    )
+}
+```
+<br>
